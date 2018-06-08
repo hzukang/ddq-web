@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap        
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"        
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap>
+	<typeAlias alias="stock" type="ddq.model.Stock" />
+	<typeAlias alias="stockflow" type="ddq.model.StockFlow" />
+	<typeAlias alias="stocklog" type="ddq.model.StockLog" />
+	<typeAlias alias="stocksyslog" type="ddq.model.StockSysLog" />
+	<typeAlias alias="stockprofit" type="ddq.model.StockProfit" />
+	<typeAlias alias="stocksnap" type="ddq.model.StockSnap" />
+	<typeAlias alias="stockuser" type="ddq.model.StockUser" />
+	<typeAlias alias="stockshow" type="ddq.model.StockShow" />
+
+
+	<!-- stock -->
+	<select id="selectAllStock" resultClass="stock">
+		select
+		id,stockid,closeprice,market,updatedate,createdate,company,name,firstspell,spell
+		from
+		tb_stock
+	</select>
+
+	<select id="selectStock" resultClass="stock">
+		select
+		stockid,market,name,type marketname,tradingunit
+		from
+		tb_stock a order by market 
+	</select>
+
+	<insert id="insertStock" parameterClass="stock">  
+        <![CDATA[  
+            insert into tb_stock    
+            (stockid,closeprice,market,createdate,company,name,firstspell,spell,type,remark,tradingunit,marketcap,country,ipoyear,subsector)  
+            values (#stockid#,#closeprice#,#market#,#createdate#,#company#,#name#,#firstspell#,#spell#,#type#,#remark#,#tradingunit#,#marketcap#,#country#,#ipoyear#,#subsector#)
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+	<update id="updateStock" parameterClass="stock">
+		update tb_Stock set
+		closeprice=#closeprice#
+		where stockid=#stockid#
+	</update>
+
+
+	<delete id="deleteStockById" parameterClass="int">
+		delete from tb_Stock
+		where stockid=#stockid#
+	</delete>
+
+	<!-- stockflow -->
+	<select id="selectAllStockFlow" resultClass="stockflow">
+		select
+		id,timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,ctype,currency,status,operation
+		from tb_stock_flow
+	</select>
+
+	<select id="selectStockFlowById" resultClass="stockflow"
+		parameterClass="int">
+		select
+		id,timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,ctype,currency,status,operation
+		from tb_stock_flow where id=#id# and operation=1 and status=1
+	</select>
+
+	<select id="selectStockFlowByStock" resultClass="stockflow">
+		select
+		id,timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,ctype,currency,status,operation
+		from tb_stock_flow where stockid=#stockid# and uid=#uid# order by id
+		desc
+	</select>
+
+	<select id="selectStockFlowByUid" resultClass="stockflow"
+		parameterClass="stockflow">
+		select
+		id,timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,ctype,currency,status,operation
+		from tb_stock_flow where uid=#uid# and status=1
+		<isNotEmpty prepend="and" property="stockid">    
+               <![CDATA[ stockid =#stockid# ]]>
+		</isNotEmpty>
+		order by id desc
+	</select>
+
+	<select id="selectStockFlowByDate" resultClass="stockflow"
+		parameterClass="string">
+         <![CDATA[ select * from ( select
+		id,uid,stockid,operation,sum(position)position,sum(position*price)price,DATE_FORMAT(`timestamp`,'%Y-%m-%d') timestamp
+		from tb_stock_flow where DATE_FORMAT(`timestamp`,'%Y-%m-%d')=#date# and operation!=3 and currency!=3
+		GROUP BY uid,stockid,operation
+		UNION ALL
+        select
+		id,uid,stockid,operation,sum(position)position,sum(position*price)price,#date# timestamp
+		from tb_stock_flow where `timestamp`>#date1#+' 12:00:00' and  `timestamp`<#date#+' 12:00:00'  and operation!=3 and currency=3
+		GROUP BY uid,stockid,operation ) a order by id
+		]]>
+	</select>
+
+	<update id="updateStockFlow" parameterClass="stockflow">
+		update tb_stock_flow
+		set price=#price#,position=#position#,
+		feeprice=#feeprice# where
+		id=#id#
+	</update>
+
+	<update id="delStockFlow" parameterClass="int">
+		update tb_stock_flow
+		set status=0 where
+		id=#id#
+	</update>
+
+	<insert id="insertStockFlow" parameterClass="stockflow">
+		insert tb_stock_flow
+		(timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,ctype,currency,status,operation)
+		values(#timestamp#,#position#,#price#,#uid#,#stockid#,#cashflowid#,#debtflowid#,#feeprice#,#ctype#,#currency#,#status#,#operation#)
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+	<!-- stocklog -->
+	<select id="selectAllStockLog" resultClass="stocklog">
+		select
+		id,timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,operation
+		from tb_log_stock
+	</select>
+
+	<select id="selectStockLogByStock" resultClass="stocklog">
+		select
+		id,timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,operation
+		from tb_log_stock where stockid=#stockid# order by id
+		desc
+	</select>
+
+	<select id="selectStockLogByUid" resultClass="stocklog">
+		select
+		id,timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,operation
+		from tb_log_stock where uid=#uid# order by id desc
+	</select>
+
+	<insert id="insertStockLog" parameterClass="stocklog">
+		insert tb_log_stock
+		(timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,operation,userlogid)
+		values(#timestamp#,#position#,#price#,#uid#,#stockid#,#cashflowid#,#debtflowid#,#feeprice#,#operation#,#userlogid#)
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+
+	<!-- stocksyslog -->
+	<select id="selectAllStockSysLog" resultClass="stocksyslog">
+		select
+		id,timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,operation
+		from tb_syslog_stock
+	</select>
+
+	<select id="selectStockSysLogByStock" resultClass="stocksyslog">
+		select
+		id,timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,operation
+		from tb_syslog_stock where stockid=#stockid# order by id
+		desc
+	</select>
+
+	<select id="selectStockSysLogByUid" resultClass="stocksyslog">
+		select
+		id,timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,operation
+		from tb_syslog_stock where uid=#uid# order by id desc
+	</select>
+
+
+	<insert id="insertStockSysLog" parameterClass="stocksyslog">
+		insert tb_syslog_stock
+		(timestamp,position,price,uid,stockid,cashflowid,debtflowid,feeprice,operation)
+		values(#timestamp#,#position#,#price#,#uid#,#stockid#,#cashflowid#,#debtflowid#,#feeprice#,#operation#)
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+	<!-- stockprofit -->
+	<select id="selectAllStockProfit" resultClass="stockprofit">
+		select
+		id,timestamp,stockid,market,profit,flowid,status,ctype,currency,uid,total
+		from tb_stock_profit
+	</select>
+
+	<select id="selectStockProfitByStock" resultClass="stockprofit"
+		parameterClass="java.lang.String">
+		select
+		id,timestamp,stockid,uid,market,profit,flowid,status,ctype,currency,total
+		from tb_stock_profit where stockid=#stockid# order by id
+		desc
+	</select>
+
+	<select id="selectStockProfitByUid" resultClass="stockprofit"
+		parameterClass="int">
+		select
+		id,timestamp,stockid,uid,market,profit,flowid,status,ctype,currency,total
+		from tb_stock_profit where uid=#uid# order by id desc
+	</select>
+
+	<select id="selectStockProfitByTime" resultClass="stockprofit"
+		parameterClass="java.util.Map">
+		<![CDATA[ select
+		id,timestamp,stockid,uid,market,profit,flowid,status,ctype,currency,total,ytdposition
+		from tb_stock_profit where uid=#uid# and ctype<>1 ]]>
+		<dynamic>
+			<isNotEmpty prepend="and" property="starttime">    
+                <![CDATA[ timestamp >=#starttime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="stockid">    
+                <![CDATA[ stockid=#stockid# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="time">
+				DATE_FORMAT(timestamp,'%Y-%m-%d') = #time#
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="endtime">    
+               <![CDATA[ timestamp <=#endtime# ]]>
+			</isNotEmpty>
+		</dynamic>
+		order by id desc
+	</select>
+
+	<select id="selectStockProfitByCtype" resultClass="stockprofit"
+		parameterClass="stockprofit">
+		select
+		stockid,sum(profit) profit
+		from tb_stock_profit
+		where uid=#uid# and
+		ctype=#ctype#
+		group by stockid desc
+	</select>
+
+	<sql id="StockProfit">
+
+	</sql>
+
+	<insert id="insertStockProfit" parameterClass="stockprofit">
+		insert tb_stock_profit
+		(timestamp,stockid,uid,market,profit,flowid,status,ctype,currency,total)
+		values(#timestamp#,#stockid#,#uid#,#market#,#profit#,#flowid#,#status#,#ctype#,#currency#,#total#)
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+	<insert id="insertStockProfitByList" parameterClass="java.util.List">
+		insert tb_stock_profit
+		(timestamp,stockid,uid,market,profit,status,ctype,currency,total,ytdposition)
+		values
+		<iterate conjunction="," property="">
+			(#[].timestamp#,#[].stockid#,#[].uid#,#[].market#,#[].profit#,#[].status#,#[].ctype#,#[].currency#,#[].total#,#[].ytdposition#)
+		</iterate>
+		<selectKey resultClass="int">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+	<delete id="deleteStockProfitByTime" parameterClass="string">
+	   <![CDATA[  delete from
+		tb_stock_profit where  DATE_FORMAT(timestamp,'%Y-%m-%d')=#timestamp# and ctype <> 1
+		]]>
+	</delete>
+
+	<update id="updateStockProfit" parameterClass="stockprofit">
+		update
+		tb_stock_profit set profit=#profit#,total=#total# where 1=2
+	</update>
+
+	<delete id="deleteStockProfit" parameterClass="int">
+		delete from
+		tb_stock_profit where id=#id#
+	</delete>
+
+	<update id="delStockProfit" parameterClass="int">
+		update
+		tb_stock_profit set status=0 where flowid=#flowid#
+	</update>
+
+	<!-- stockuser -->
+	<select id="selectAllStockUser" resultClass="stockuser">
+		select
+		id,uid,stockid,position,costprice,dilutedprice,updatedate,createdate,buynum,sellnum,buycash,sellcash,
+		ifnull((select market from tb_stock b where a.stockid=b.stockid),1)
+		market
+		from tb_stock_user a
+	</select>
+
+	<select id="selectStockUser" resultClass="stockuser"
+		parameterClass="java.util.Map">
+		select
+		id,uid,stockid,position,costprice,dilutedprice,updatedate,createdate,buynum,sellnum,buycash,sellcash
+		from tb_stock_user where stockid=#stockid# and uid=#uid# order by id
+		desc
+	</select>
+
+	<select id="selectStockIds" resultClass="stockuser">
+		select stockid,ifnull((select
+		market from tb_stock b where a.stockid=b.stockid),"")
+		market from
+		tb_stock_user a group by stockid
+	</select>
+
+	<select id="selectStockUserByStock" resultClass="stockuser"
+		parameterClass="java.lang.String">
+		select
+		id,uid,stockid,position,costprice,dilutedprice,updatedate,createdate,buynum,sellnum,buycash,sellcash
+		from tb_stock_user where stockid=#stockid# order by id
+		desc
+	</select>
+
+	<select id="selectStockUserByUid" resultClass="stockuser"
+		parameterClass="int">
+		select
+		id,uid,stockid,position,costprice,dilutedprice,updatedate,createdate,buynum,sellnum,buycash,sellcash,
+		ifnull((select market from tb_stock b where a.stockid=b.stockid),1)
+		market
+		from tb_stock_user a where uid=#uid# order by id desc
+	</select>
+
+	<insert id="insertStockUser" parameterClass="stockuser">
+		insert tb_stock_user
+		(uid,stockid,position,costprice,dilutedprice,createdate,buynum,sellnum,buycash,sellcash)
+		values(#uid#,#stockid#,#position#,#costprice#,#dilutedprice#,#createdate#,#buynum#,#sellnum#,#buycash#,#sellcash#)
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+	<update id="updateStockUser" parameterClass="stockuser">
+		update tb_stock_user
+		set
+		position=#position#,costprice=#costprice#,
+		dilutedprice=#dilutedprice#,
+		buynum=#buynum#,sellnum=#sellnum#,buycash=#buycash#,sellcash=#sellcash#
+		where id=#id#
+	</update>
+
+	<delete id="deleteStockUser" parameterClass="int">
+		delete from
+		tb_stock_user where id=#id#
+	</delete>
+
+	<!-- stocksnap -->
+	<select id="selectAllStockSnap" resultClass="stocksnap">
+		select
+		id,stockid,price,timestamp
+		from tb_stock_snap
+	</select>
+
+	<select id="selectStockSnapByDate" resultClass="stocksnap"
+		parameterClass="string">
+		select
+		id,stockid,price,timestamp
+		from tb_stock_snap
+		where DATE_FORMAT(`timestamp`,'%Y-%m-%d')=(select
+		DATE_FORMAT(max(`timestamp`),'%Y-%m-%d') from tb_stock_snap)
+	</select>
+
+	<insert id="insertStockSnap" parameterClass="stocksnap">
+		insert tb_stock_snap
+		(stockid,price,timestamp)
+		values(#stockid#,#price#,#timestamp#)
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+	<delete id="deleteStockSnap" parameterClass="int">
+		delete from
+		tb_stock_snap where id=#id#
+	</delete>
+
+	<delete id="deleteStockSnapByTime" parameterClass="string">
+		delete from
+		tb_stock_snap where DATE_FORMAT(`timestamp`,'%Y-%m-%d')=#timestamp#
+	</delete>
+
+	<insert id="insertStockSnapByList" parameterClass="java.util.List">
+		insert tb_stock_snap
+		(timestamp,stockid,price)
+		values
+		<iterate conjunction=",">
+			(#[].timestamp#,#[].stockid#,#[].price#)
+		</iterate>
+		<selectKey resultClass="int">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+
+	<!-- stockshow -->
+	<select id="selectAllStockShow" resultClass="stockshow">
+		select
+		id,timestamp,status,stockid,uid from tb_stock_show order by id;
+	</select>
+
+	<select id="selectStockShowByUid" resultClass="stockshow"
+		parameterClass="int">
+		select id,timestamp,status,stockid,uid from
+		tb_stock_show where uid=#uid#
+		order by id;
+	</select>
+
+	<select id="selectShowByUid" resultClass="stockshow"
+		parameterClass="int">
+		select id,timestamp,status,stockid,uid,1 type from
+		tb_stock_show where
+		uid=#uid# and status=1
+		union ALL
+		select
+		id,now(),1,stockid,uid,0 type from tb_stock_user where uid=#uid#
+	</select>
+
+	<update id="updateStockShow" parameterClass="stockshow">
+		update tb_stock_show
+		set timestamp=#timestamp#,status=#status# where
+		uid=#uid# and
+		stockid=#stockid#
+	</update>
+
+	<insert id="insertStockShow" parameterClass="stockshow">
+		insert tb_stock_show (id,timestamp,status,stockid,uid)
+		values(#id#,#timestamp#,#status#,#stockid#,#uid#);
+		<selectKey resultClass="int">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+
+</sqlMap>

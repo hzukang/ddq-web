@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ddq.mapper.StockShowMapper">
+	<sql id="select_columns">
+		id,uid,stockid,sortvalue,timestamp,status
+	</sql>
+	<select id="find" resultType="StockShow">
+		SELECT
+		<include refid="select_columns" />
+		FROM tb_stock_show
+		<where>
+			<if test="stockid != null">
+				and stockid = #{stockid}
+			</if>
+			<if test="uid != null">
+				and uid = #{uid}
+			</if>
+			<if test="status != null">
+				and status = #{status}
+			</if>
+		</where>
+		order by  sortvalue desc
+	</select>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO tb_stock_show(uid,stockid,sortvalue,status) VALUES (#{uid}, #{stockid},#{sortvalue}, #{status})
+	</insert>
+	
+	<update id="updateSortById">
+		UPDATE  tb_stock_show SET sortvalue=#{sortvalue} WHERE uid=#{uid} AND stockid=#{stockid}
+	</update>
+	
+	<delete id="deleteByStockId">
+		delete from tb_stock_show where  uid = #{uid} and stockid = #{sotckid}
+	</delete>
+	
+</mapper>

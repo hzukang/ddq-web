@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE sqlMap        
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"        
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap>
+	<typeAlias alias="calc" type="ddq.model.Calc" />
+	<typeAlias alias="calcflow" type="ddq.model.CalcFlow" />
+	<typeAlias alias="calclog" type="ddq.model.CalcLog" />
+	<typeAlias alias="calcsyslog" type="ddq.model.CalcSysLog" />
+
+
+	<!-- calc -->
+	<select id="selectAllCalc" resultClass="calc">
+		select
+		id,interest,time,rate,currency,debt,repayment,status,debtid from
+		tb_calc order by id desc
+	</select>
+
+	<select id="selectCalcByFLowid" resultClass="calc"
+		parameterClass="int">
+		select
+		id,interest,time,rate,currency,debt,repayment,status,debtid
+		from
+		tb_calc where flowid=#flowid# order by id desc
+	</select>
+
+	<select id="selectCalcInterestByUid" parameterClass="java.util.Map"
+		resultClass="calc">
+	      <![CDATA[  select id,interest,time,rate,currency,debt,repayment,status,debtid from tb_calc a where status<3 and EXISTS(select 'x' from tb_debt b where b.uid=#uid# and b.id=a.debtid and b.currency=#currency#) order by a.id 
+	      ]]>
+	</select>
+
+
+	<insert id="insertCalc" parameterClass="calc">
+        <![CDATA[  
+            insert into tb_calc   
+              (time,rate,currency,debt,repayment,debtid,status,interest)  
+              values (#time#,#rate#,#currency#,#debt#,#repayment#,#debtid#,#status#,#interest#);  
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id;
+		</selectKey>
+	</insert>
+
+	<insert id="insertCalcByTime" parameterClass="debt">
+       <![CDATA[  insert into tb_calc(time,rate,currency,debt,repayment,debtid,status,interest) select tempdate,#rate#,#currency#,#debt#,0,#id#,1,#interest# from calendar where tempdate>#starttime# and tempdate<=#endtime#
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id;
+		</selectKey>
+	</insert>
+
+
+	<update id="updateCalcById" parameterClass="calc">
+		update tb_calc set
+		<isNotEmpty prepend="," property="repayment">
+			Repayment=#Repayment#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="status">
+			status=#status#
+		</isNotEmpty>
+		where id=#id#
+	</update>
+
+	<update id="updateCalcByDebtId" parameterClass="calc">
+		update tb_calc set
+		<isNotEmpty prepend="," property="status">
+			status=#status#
+		</isNotEmpty>
+		where debtid=#debtid#
+	</update>
+
+
+
+	<!-- calcflow -->
+	<select id="selectAllCalcFlow" resultClass="calcflow">
+		select
+		id,interest,timestamp,status,Cashflowid,Calcid,currency from
+		tb_calc_flow order by id desc
+	</select>
+
+	<select id="selectCalcFlowByCalcid" resultClass="calcflow"
+		parameterClass="int">
+		select
+		id,interest,timestamp,status,Cashflowid,Calcid,currency
+		from
+		tb_calc_flow where Calcid=#Calcid# order by id desc
+	</select>
+
+	<select id="selectInterest" resultClass="java.util.Map"
+		parameterClass="int">
+		select sum(interest) interest,IFNULL(Cashflowid,0) Cashflowid ,(select cash
+		from tb_cash_flow where id=Cashflowid) cash from tb_calc_flow where
+		Calcid in (select id from tb_calc where debtid=#debtid#) and
+		operation=2 and status=1  group by Cashflowid
+	</select>
+
+	<insert id="insertCalcFlow" parameterClass="calcflow">
+        <![CDATA[  
+            insert into tb_calc_flow  
+              (interest,timestamp,status,Cashflowid,Calcid,currency,operation)  
+              values (#interest#,#timestamp#,#status#,#cashflowid#,#calcid#,#currency#,#operation#);  
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id;
+		</selectKey>
+	</insert>
+
+	<insert id="insertCalcflowByTime" parameterClass="debt">
+       <![CDATA[  insert into tb_calc_flow(interest,timestamp,status,Calcid,currency) select #interest#,tempdate,1,#id#,#currency# from calendar where tempdate>#starttime# and tempdate<=#endtime#
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id;
+		</selectKey>
+	</insert>
+	
+	
+
+	<update id="updateCalcFlow" parameterClass="int">
+		update tb_calc_flow
+		set status=0 where Calcid in (select id from tb_calc where status=4
+		and debtid=#debtid#)
+	</update>
+
+	<delete id="deleteCalcFlow" parameterClass="int">
+		delete tb_calc_flow
+		where id=#id#
+	</delete>
+
+
+	<!-- calclog -->
+	<select id="selectAllCalcLog" resultClass="calclog">
+		select
+		id,interest,time,currency,flowid,operation,cashflowid from
+		tb_log_calc
+		order by id desc
+	</select>
+
+	<select id="selectCalcLogByFLowid" resultClass="calclog">
+		select
+		id,interest,time,currency,flowid,operation,cashflowid
+		from
+		tb_log_calc
+		where flowid=#flowid# order by id desc
+	</select>
+
+	<insert id="insertCalcLog" parameterClass="calclog">
+        <![CDATA[  
+            insert into tb_log_calc   
+              (interest,time,currency,flowid,operation,cashflowid)  
+              values (#interest#,#time#,#currency#,#flowid#,#operation#,#cashflowid#);  
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id;
+		</selectKey>
+	</insert>
+
+
+	<!-- calcsyslog -->
+	<select id="selectAllCalcSysLog" resultClass="calcsyslog">
+		select
+		id,interest,time,currency,flowid,operation,cashflowid from
+		tb_syslog_calc order by id desc
+	</select>
+
+	<select id="selectCalcSysLogByFLowid" resultClass="calcsyslog">
+		select
+		id,interest,time,currency,flowid,operation,cashflowid
+		from
+		tb_syslog_calc where flowid=#flowid# order by id desc
+	</select>
+
+	<insert id="insertCalcSysLog" parameterClass="calcsyslog">
+        <![CDATA[  
+            insert into tb_syslog_calc   
+              (interest,time,currency,flowid,operation,cashflowid)  
+              values (#interest#,#time#,#currency#,#flowid#,#operation#,#cashflowid#);  
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id;
+		</selectKey>
+	</insert>
+
+</sqlMap>

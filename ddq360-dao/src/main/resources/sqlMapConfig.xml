@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMapConfig        
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN"        
+    "http://ibatis.apache.org/dtd/sql-map-config-2.dtd">  
+  
+<sqlMapConfig>  
+    <settings cacheModelsEnabled="true" enhancementEnabled="true"  
+        lazyLoadingEnabled="true" errorTracingEnabled="true" maxRequests="32"  
+        maxSessions="10" maxTransactions="5" useStatementNamespaces="false" />  
+ 
+    <sqlMap resource="cash.xml" />  
+    <sqlMap resource="debt.xml" />  
+    <sqlMap resource="stock.xml" />  
+    <sqlMap resource="sysconfig.xml" />
+    <sqlMap resource="calc.xml" />
+</sqlMapConfig> 

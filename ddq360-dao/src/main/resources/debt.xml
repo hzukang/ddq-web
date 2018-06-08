@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap        
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"        
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap>
+	<typeAlias alias="debt" type="ddq.model.Debt" />
+	<typeAlias alias="debtflow" type="ddq.model.DebtFlow" />
+	<typeAlias alias="debtlog" type="ddq.model.DebtLog" />
+	<typeAlias alias="debtsyslog" type="ddq.model.DebtSysLog" />
+
+
+	<!-- debt -->
+	<select id="selectAllDebt" resultClass="debt">
+		select
+		id,uid,interest,createdate,starttime,rate,endtime,currency,debt,flowid
+		from
+		tb_debt
+	</select>
+
+	<select id="selectDebtByUidCur" resultClass="debt"
+		parameterClass="debt">
+		select
+		id,uid,interest,createdate,starttime,rate,endtime,currency,debt,flowid
+		from tb_debt where uid=#uid# and currency=#currency# order by id;
+	</select>
+
+	<select id="selectDebtByUid" resultClass="debt" parameterClass="int">
+		select
+		id,uid,interest,createdate,starttime,rate,endtime,currency,debt,flowid
+		from tb_debt where uid=#uid# order by id;
+	</select>
+
+	<select id="selectDebtSUMByUid" resultClass="java.util.HashMap"
+		parameterClass="debt">
+		select sum(debt) debt,sum(interest) interest from
+		tb_debt where uid=#uid# and currency=#currency#
+	</select>
+
+	<select id="selectDebtByFlowid" resultClass="debt"
+		parameterClass="debt">
+		select
+		id,uid,interest,createdate,starttime,rate,endtime,currency,debt,flowid
+		from tb_debt where flowid=#flowid#
+	</select>
+
+	<select id="selectDebtById" resultClass="debt" parameterClass="int">
+		select
+		id,uid,interest,createdate,starttime,rate,endtime,currency,debt,flowid
+		from tb_debt where id=#id#
+	</select>
+
+	<insert id="insertDebt" parameterClass="debt">  
+        <![CDATA[  
+            insert into tb_debt    
+              (uid,interest,createdate,starttime,rate,endtime,currency,debt,flowid)  
+              values (#uid#,#interest#,#createdate#,#starttime#,#rate#,#endtime#,#currency#,#debt#,#flowid#)  
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+	<update id="updateDebt" parameterClass="debt">
+		update tb_debt set debt=#debt#
+		<isNotEmpty prepend="," property="interest">
+			interest=#interest#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="endtime">
+			endtime=#endtime#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="starttime">
+			starttime=#starttime#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="rate">
+			rate=#rate#
+		</isNotEmpty>
+		where id=#id#
+	</update>
+
+	<update id="updateDebtInterest" parameterClass="java.util.Map">
+	     <![CDATA[ update tb_debt a set interest=(select sum(interest)-sum(repayment) from tb_calc b where a.id=b.debtid and status<3 ) where uid=#uid# and currency=#currency# ]]>
+	</update>
+
+	<update id="updateAllDebtInterest">
+	     <![CDATA[ update tb_debt a set interest=(select sum(interest)-sum(repayment) from tb_calc b where a.id=b.debtid and status<3 ) where debt<>0 ]]>
+	</update>
+
+	<delete id="deleteDebtById" parameterClass="int">
+		delete from tb_debt
+		where id=#id#
+	</delete>
+
+
+
+	<!-- debtflow -->
+	<select id="selectAllDebtFlow">
+		select
+		id,uid,timestamp,starttime,rate,currency,debt,operation,status,flowid
+		from tb_debt_flow
+	</select>
+
+	<select id="selectDebtFlowByUid" resultClass="debtflow"
+		parameterClass="debtflow">
+		select
+		id,uid,timestamp,starttime,rate,currency,debt,operation,status,flowid
+		from tb_debt_flow where uid=#uid#;
+	</select>
+
+	<select id="selectAssetsHistoryByUid" resultClass="debtflow"
+		parameterClass="int">
+		select * from (select id,cash debt,`timestamp`,operation,currency,uid,0 status
+		from tb_cash_flow where uid=#uid# and `status`=1
+		UNION all
+		select
+		id,debt,`timestamp`,operation,currency,uid,1 from tb_debt_flow where
+		uid=#uid# and `status`=1) a order by timestamp
+	</select>
+
+	<select id="selectDebtFlowById" resultClass="debtflow"
+		parameterClass="int">
+		select
+		id,uid,timestamp,starttime,rate,currency,debt,operation,status,flowid
+		from tb_debt_flow where id=#id#;
+	</select>
+
+
+
+	<insert id="insertDebtFlow" parameterClass="debtflow">
+        <![CDATA[  
+            insert into tb_debt_flow    
+              (uid,timestamp,starttime,rate,currency,debt,operation,status,flowid)  
+              values (#uid#,#timestamp#,#starttime#,#rate#,#currency#,#debt#,#operation#,#status#,#flowid#)  
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+	<update id="updateDebtFlow" parameterClass="debtflow">
+		update tb_debt_flow set debt=#debt#
+		<isNotEmpty prepend="," property="starttime">
+			starttime=#starttime#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="rate">
+			rate=#rate#
+		</isNotEmpty>
+		<isNotEmpty prepend="," property="status">
+			status=#status#
+		</isNotEmpty>
+		where id=#id#
+	</update>
+
+	<delete id="deleteDebtFlowById" parameterClass="int">
+		delete from
+		tb_debt_flow where id=#id#
+	</delete>
+
+	<update id="delDebtFlowById" parameterClass="int">
+		update tb_debt_flow
+		set status=0 where id=#id#
+	</update>
+
+	<!-- debtlog -->
+	<select id="selectAllDebtLog" resultClass="debtlog">
+		select
+		id,uid,timestamp,starttime,rate,currency,debt,operation,status,flowid
+		from tb_log_debt
+	</select>
+
+	<select id="selectDebtLogByUid" resultClass="debtlog">
+		select
+		id,uid,timestamp,starttime,rate,currency,debt,operation,status,flowid
+		from tb_log_debt where uid=#uid#
+	</select>
+
+	<insert id="insertDebtLog" parameterClass="debtlog">
+          <![CDATA[  
+            insert into tb_log_debt   
+              (uid,timestamp,rate,currency,debt,operation,flowid,userlogid)  
+              values (#uid#,#timestamp#,#rate#,#currency#,#debt#,#operation#,#flowid#,#userlogid#);  
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id ;
+		</selectKey>
+	</insert>
+
+
+
+
+	<!-- debtsyslog -->
+	<select id="selectAllDebtSysLog" resultClass="debtsyslog">
+		select
+		id,uid,timestamp,rate,currency,debt,operation,flowid,debtid
+		from
+		tb_syslog_debt order by id desc
+	</select>
+
+	<select id="selectDebtSysLogByUid" resultClass="debtsyslog"
+		parameterClass="int">
+		select
+		id,uid,timestamp,rate,currency,debt,operation,flowid,debtid
+		from
+		tb_syslog_debt where uid=#uid# order by id desc
+	</select>
+
+	<select id="selectDebtSysLogByDebtid" resultClass="debtsyslog"
+		parameterClass="int">
+		select id,uid,timestamp,debt,operation,flowid,debtid
+		from tb_syslog_debt where debtid=#debtid# and operation=2 order by id
+	</select>
+
+	<insert id="insertDebtSysLog" parameterClass="debtsyslog">
+          <![CDATA[  
+            insert into tb_syslog_debt   
+              (uid,timestamp,rate,currency,debt,operation,flowid,debtid)  
+              values (#uid#,#timestamp#,#rate#,#currency#,#debt#,#operation#,#flowid#,#debtid#);  
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id ;
+		</selectKey>
+	</insert>
+
+
+	<update id="updateDebtSysLog" parameterClass="debtsyslog">
+		update
+		tb_syslog_debt set debt=#debt# where id=#id#
+	</update>
+
+
+	<select id="selectDebtSysLogByFlowid" resultClass="debtsyslog"
+		parameterClass="int">
+		select
+		id,uid,timestamp,rate,currency,debt,operation,status,flowid,debtid
+		from tb_syslog_debt where flowid=#flowid# order by id desc
+	</select>
+
+
+
+</sqlMap>

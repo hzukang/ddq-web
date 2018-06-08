@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap        
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"        
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap>
+	<typeAlias alias="user" type="ddq.model.User" />
+	<typeAlias alias="currency" type="ddq.model.Currency" />
+	<typeAlias alias="userlog" type="ddq.model.UserLog" />
+	<typeAlias alias="calendar" type="ddq.model.Calendar" />
+
+	<!-- currency -->
+	<select id="selectAllCurrency" resultClass="currency">
+		select
+		id,name,exchange,symbol,isocode,market from tb_currency
+	</select>
+
+	<insert id="insertCurrency" parameterClass="currency">  
+        <![CDATA[  
+            insert into tb_currency    
+            (name,exchange,symbol,isocode,market)  
+            values (#name#,#exchange#,#symbol#,#isocode#,#market#);  
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id ;
+		</selectKey>
+	</insert>
+
+	<delete id="deleteCurrencyByCode" parameterClass="string">
+		delete from
+		tb_currency where isocode=#isocode#
+	</delete>
+
+	<update id="updateCurrencyByCode" parameterClass="currency">
+		update
+		tb_currency set exchange=#exchange# where
+		isocode=#isocode#
+	</update>
+
+	<!--userlog -->
+	<select id="selectAllUserLog" resultClass="userlog">
+		select
+		id,uid,ip,time,operation,remark,flowid from tb_user_log
+	</select>
+
+	<select id="selectUserLogBuyUid" resultClass="userlog"
+		parameterClass="int">
+		select id,uid,ip,time,operation,remark,flowid from
+		tb_user_log where uid=#uid#
+	</select>
+
+	<insert id="insertUserLog" parameterClass="userlog">  
+        <![CDATA[  
+            insert into tb_user_log    
+            (uid,ip,time,operation,remark,flowid)  
+            values (#uid#,#ip#,#time#,#operation#,#remark#,#flowid#);  
+        ]]>
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id ;
+		</selectKey>
+	</insert>
+
+	<delete id="deleteUserLogById" parameterClass="int">
+		delete from
+		tb_user_log where id=#id#
+	</delete>
+	
+	<!--calendar -->
+	<select id="selectAllCalendar" resultClass="calendar">
+		select
+		isclose,tempdate from calendar
+	</select>
+	
+	<select id="selectCalendarByDate" resultClass="calendar" parameterClass="calendar">
+		select
+		isclose,tempdate from calendar where tempdate=#tempdate#
+	</select>
+	
+	<update id="updateCalendar" parameterClass="calendar">
+		update calendar set isclose=#isclose# where id=#id#
+	</update>
+
+</sqlMap>

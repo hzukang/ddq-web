@@ -1,0 +1,25 @@
+{
+  "name": "demo5",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "dependencies": {
+    "express": "3.0.6",
+    "jade": "*"
+  },
+  "filename1":"./content.html",
+  "Templete":[{"k1":{"html":"./content.html","sql":"","mode":"","url":""},"k2":{"html":"./content.html","sql":"","mode":"","url":""}}],
+  "connection":{"host":"127.0.0.1",
+            	"user":"root",
+                "password":"123456",
+            	"port":"3306",
+            	"database":"test",
+            	"charset":"UTF8_GENERAL_CI"},
+  "logger":{ "type": "file",
+      "filename": "logs/ERR.log", 
+      "maxLogSize": "10240000",
+      "backups":"3",
+      "category": "ERR"}
+}

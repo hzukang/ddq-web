@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ddq.mapper.StockUserMapper">
+	<sql id="select_columns">
+		id,uid,stockid,position,costprice,dilutedprice,updatedate,createdate,buynum,sellnum,buycash,sellcash
+	</sql>
+	<select id="selectStockUser" resultType="StockUser">
+		SELECT
+		<include refid="select_columns" />
+		FROM tb_stock_user
+		<where>
+			<if test="stockid != null">
+				and stockid = #{stockid}
+			</if>
+			<if test="uid != null">
+				and uid = #{uid}
+			</if>
+			and position != 0
+		</where>
+	</select>
+
+    <select id="selectStockUserByUid" resultType="StockUser">
+      SELECT stockid,id from tb_stock_user where uid = #{uid} and position != 0
+    </select>
+	
+</mapper>

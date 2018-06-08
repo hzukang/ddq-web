@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ddq.mapper.StockFlowMapper">
+
+	<select id="selectStockFlowByDate" resultType="StockFlow">
+		<![CDATA[ select * from ( select
+		id,uid,stockid,operation,sum(position)position,sum(position*price)price,DATE_FORMAT(`timestamp`,'%Y-%m-%d') timestamp
+		from tb_stock_flow where DATE_FORMAT(`timestamp`,'%Y-%m-%d')=#{date} and operation!=3 and currency!=3
+		GROUP BY uid,stockid,operation
+		UNION ALL
+        select
+		id,uid,stockid,operation,sum(position)position,sum(position*price)price,#date# timestamp
+		from tb_stock_flow where `timestamp`>#{date1}+' 12:00:00' and  `timestamp`<#{date}+' 12:00:00'  and operation!=3 and currency=3
+		GROUP BY uid,stockid,operation ) a order by id
+		]]>
+    </select>
+
+
+</mapper>

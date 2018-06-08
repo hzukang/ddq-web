@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ddq.mapper.StockMapper">
+	<sql id="select_columns">
+		id,stockid,closeprice,market,createdate,company,name,firstspell,spell,type,remark,tradingunit,marketcap,country,ipoyear,subsector
+	</sql>
+
+	<insert id="insertStock" useGeneratedKeys="true" keyProperty="id">
+		insert into tb_stock
+		(stockid,closeprice,market,createdate,company,name,firstspell,spell,type,remark,tradingunit,marketcap,country,ipoyear,subsector)
+		values
+		(#{stockid},#{closeprice},#{market},#{createdate},#{company},#{name},#{firstspell},#{spell},#{type},#{remark},#{tradingunit},#{marketcap},#{country},#{ipoyear},#{subsector})
+		<selectKey resultType="int" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+
+	<insert id="insertStockList" useGeneratedKeys="true" keyProperty="id"
+		parameterType="java.util.List">
+		insert into tb_stock
+		(stockid,closeprice,market,createdate,company,name,firstspell,spell,type,remark,tradingunit,marketcap,country,ipoyear,subsector)
+		values
+		
+		<foreach collection="list" item="item" index="index"
+			separator=",">
+			<![CDATA[ (#{item.stockid},#{item.closeprice},#{item.market},#{item.createdate},#{item.company},#{item.name},#{item.firstspell},#{item.spell},#{item.type},#{item.remark},#{item.tradingunit},#{item.marketcap},#{item.country},#{item.ipoyear},#{item.subsector})]]> 
+		</foreach>
+		
+		<selectKey resultType="long" keyProperty="id">
+			SELECT
+			last_insert_id() as id
+		</selectKey>
+	</insert>
+	
+</mapper>

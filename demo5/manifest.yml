@@ -1,0 +1,11 @@
+---
+# this manifest deploys two applications
+# apps are in flame and spark directories
+# flame and spark are in fireplace
+# cf push should be run from fireplace
+applications:
+- name: oo
+  memory: 1G
+  command: node app.js
+  instances: 2
+  
